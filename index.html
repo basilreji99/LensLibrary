@@ -1,0 +1,1437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0a0a0a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>MUSE — Photoshoot Inspiration</title>
+<link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --bg2: #111111;
+    --bg3: #1a1a1a;
+    --border: #2a2a2a;
+    --text: #f0ebe3;
+    --text2: #888;
+    --text3: #555;
+    --accent: #c9a96e;
+    --accent2: #e8d5b0;
+    --red: #c0392b;
+    --radius: 4px;
+    --card-radius: 8px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── HEADER ── */
+  header {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(10,10,10,0.95);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 20px;
+    display: flex; align-items: center; gap: 16px;
+    height: 60px;
+  }
+  .logo {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px; font-weight: 300; letter-spacing: 6px;
+    color: var(--accent); text-transform: uppercase; white-space: nowrap;
+  }
+  .search-wrap {
+    flex: 1; position: relative;
+  }
+  .search-wrap input {
+    width: 100%; padding: 10px 40px 10px 16px;
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 24px; color: var(--text);
+    font-family: 'DM Sans', sans-serif; font-size: 14px;
+    outline: none; transition: border-color 0.2s;
+  }
+  .search-wrap input:focus { border-color: var(--accent); }
+  .search-wrap input::placeholder { color: var(--text3); }
+  .search-icon {
+    position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+    color: var(--text3); pointer-events: none;
+  }
+  .ai-badge {
+    position: absolute; right: 38px; top: 50%; transform: translateY(-50%);
+    font-size: 9px; background: var(--accent); color: #000;
+    padding: 1px 5px; border-radius: 8px; font-weight: 500; letter-spacing: 0.5px;
+    pointer-events: none; opacity: 0; transition: opacity 0.3s;
+  }
+  .ai-badge.visible { opacity: 1; }
+  .btn-add {
+    background: var(--accent); color: #000;
+    border: none; border-radius: 24px;
+    padding: 9px 18px; font-size: 13px; font-weight: 500;
+    cursor: pointer; white-space: nowrap; transition: background 0.2s;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .btn-add:hover { background: var(--accent2); }
+
+  /* ── LAYOUT ── */
+  .app-body {
+    display: flex; min-height: calc(100vh - 60px);
+  }
+
+  /* ── SIDEBAR FILTERS ── */
+  .sidebar {
+    width: 260px; min-width: 260px;
+    background: var(--bg2);
+    border-right: 1px solid var(--border);
+    padding: 20px 0;
+    overflow-y: auto;
+    max-height: calc(100vh - 60px);
+    position: sticky; top: 60px;
+  }
+  .sidebar-title {
+    font-size: 10px; letter-spacing: 3px; text-transform: uppercase;
+    color: var(--text3); padding: 0 20px 16px; font-weight: 500;
+  }
+  .filter-group { border-bottom: 1px solid var(--border); padding: 16px 20px; }
+  .filter-group-title {
+    font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--text2); margin-bottom: 12px; cursor: pointer;
+    display: flex; align-items: center; justify-content: space-between;
+    user-select: none;
+  }
+  .filter-group-title svg { transition: transform 0.2s; }
+  .filter-group-title.collapsed svg { transform: rotate(-90deg); }
+  .filter-options { display: flex; flex-direction: column; gap: 6px; }
+  .filter-options.hidden { display: none; }
+  .filter-chip {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 10px; border-radius: var(--radius);
+    cursor: pointer; transition: background 0.15s;
+    font-size: 13px; color: var(--text2);
+    border: 1px solid transparent;
+  }
+  .filter-chip:hover { background: var(--bg3); color: var(--text); }
+  .filter-chip.active {
+    background: rgba(201,169,110,0.12);
+    border-color: rgba(201,169,110,0.3);
+    color: var(--accent);
+  }
+  .filter-chip .count {
+    margin-left: auto; font-size: 11px; color: var(--text3);
+  }
+  .filter-chip .dot {
+    width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+  }
+  .clear-filters {
+    margin: 16px 20px 0;
+    font-size: 12px; color: var(--accent);
+    cursor: pointer; text-decoration: underline;
+    display: none;
+  }
+  .clear-filters.visible { display: block; }
+
+  /* ── MAIN CONTENT ── */
+  .main {
+    flex: 1; padding: 24px;
+    overflow-x: hidden;
+  }
+  .results-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  .results-count {
+    font-size: 13px; color: var(--text3);
+  }
+  .results-count span { color: var(--text); font-weight: 500; }
+  .active-filters {
+    display: flex; flex-wrap: wrap; gap: 6px;
+  }
+  .active-tag {
+    background: rgba(201,169,110,0.12);
+    border: 1px solid rgba(201,169,110,0.3);
+    color: var(--accent); font-size: 12px;
+    padding: 3px 10px 3px 10px; border-radius: 20px;
+    display: flex; align-items: center; gap: 6px; cursor: pointer;
+  }
+  .active-tag:hover { background: rgba(201,169,110,0.2); }
+
+  /* ── CARD GRID ── */
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 20px;
+  }
+  .shoot-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--card-radius);
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+  }
+  .shoot-card:hover {
+    transform: translateY(-3px);
+    border-color: rgba(201,169,110,0.3);
+    box-shadow: 0 12px 32px rgba(0,0,0,0.5);
+  }
+  .card-img {
+    width: 100%; aspect-ratio: 3/4;
+    object-fit: cover; display: block;
+    background: var(--bg3);
+  }
+  .card-img-placeholder {
+    width: 100%; aspect-ratio: 3/4;
+    background: var(--bg3);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text3); font-size: 32px;
+  }
+  .card-body { padding: 14px; }
+  .card-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 17px; font-weight: 400;
+    color: var(--text); margin-bottom: 6px;
+    line-height: 1.3;
+  }
+  .card-meta {
+    display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 8px;
+  }
+  .tag {
+    font-size: 10px; letter-spacing: 0.5px;
+    padding: 2px 8px; border-radius: 20px;
+    background: var(--bg3); color: var(--text2);
+    border: 1px solid var(--border);
+  }
+  .tag.gender { border-color: #4a4a6a; color: #9898c8; }
+  .tag.shoot-type { border-color: #3a5a3a; color: #78a878; }
+  .tag.dress-color { border-color: #5a3a3a; color: #c87878; }
+  .card-img-count {
+    font-size: 11px; color: var(--text3);
+    display: flex; align-items: center; gap: 4px;
+  }
+
+  /* ── EMPTY STATE ── */
+  .empty-state {
+    text-align: center; padding: 80px 20px;
+    grid-column: 1/-1;
+  }
+  .empty-state .icon { font-size: 48px; margin-bottom: 16px; }
+  .empty-state h3 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 24px; font-weight: 300; color: var(--text2);
+    margin-bottom: 8px;
+  }
+  .empty-state p { font-size: 14px; color: var(--text3); }
+
+  /* ── MODAL OVERLAY ── */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.85); z-index: 200;
+    overflow-y: auto;
+  }
+  .modal-overlay.open { display: block; }
+
+  /* ── ADD SHOOT MODAL ── */
+  .modal {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    max-width: 640px; width: calc(100% - 40px);
+    margin: 40px auto; padding: 32px;
+    position: relative;
+  }
+  .modal h2 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 28px; font-weight: 300;
+    margin-bottom: 24px; color: var(--accent);
+  }
+  .modal-close {
+    position: absolute; top: 20px; right: 20px;
+    background: none; border: none; color: var(--text3);
+    font-size: 24px; cursor: pointer; line-height: 1;
+  }
+  .modal-close:hover { color: var(--text); }
+  .form-group { margin-bottom: 18px; }
+  .form-group label {
+    display: block; font-size: 11px; letter-spacing: 2px;
+    text-transform: uppercase; color: var(--text2);
+    margin-bottom: 8px;
+  }
+  .form-group input,
+  .form-group textarea,
+  .form-group select {
+    width: 100%; padding: 10px 14px;
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: var(--radius); color: var(--text);
+    font-family: 'DM Sans', sans-serif; font-size: 14px;
+    outline: none; transition: border-color 0.2s;
+  }
+  .form-group input:focus,
+  .form-group textarea:focus,
+  .form-group select:focus { border-color: var(--accent); }
+  .form-group textarea { resize: vertical; min-height: 80px; }
+  .form-group select option { background: var(--bg3); }
+
+  .tags-input-wrap {
+    display: flex; flex-wrap: wrap; gap: 6px;
+    padding: 8px; background: var(--bg3);
+    border: 1px solid var(--border); border-radius: var(--radius);
+    min-height: 44px; cursor: text;
+  }
+  .tags-input-wrap:focus-within { border-color: var(--accent); }
+  .tag-pill {
+    background: rgba(201,169,110,0.15); color: var(--accent);
+    border: 1px solid rgba(201,169,110,0.3);
+    padding: 3px 8px; border-radius: 20px; font-size: 12px;
+    display: flex; align-items: center; gap: 4px;
+  }
+  .tag-pill button {
+    background: none; border: none; color: var(--accent);
+    cursor: pointer; font-size: 14px; line-height: 1; padding: 0;
+  }
+  .tags-input-wrap input {
+    flex: 1; min-width: 80px; background: none;
+    border: none !important; padding: 3px 4px !important;
+    font-size: 13px; outline: none;
+  }
+
+  /* multi-select chips for fixed options */
+  .chips-wrap { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip-option {
+    padding: 5px 12px; border-radius: 20px;
+    border: 1px solid var(--border); font-size: 12px;
+    cursor: pointer; color: var(--text2); transition: all 0.15s;
+    background: var(--bg3);
+  }
+  .chip-option:hover { border-color: var(--accent); color: var(--accent); }
+  .chip-option.selected {
+    background: rgba(201,169,110,0.15);
+    border-color: rgba(201,169,110,0.5);
+    color: var(--accent);
+  }
+
+  /* image upload */
+  .img-upload-area {
+    border: 2px dashed var(--border); border-radius: var(--radius);
+    padding: 24px; text-align: center; cursor: pointer;
+    transition: border-color 0.2s; color: var(--text3);
+  }
+  .img-upload-area:hover, .img-upload-area.dragover {
+    border-color: var(--accent); color: var(--accent);
+  }
+  .img-upload-area input { display: none; }
+  .img-preview-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(80px,1fr));
+    gap: 8px; margin-top: 12px;
+  }
+  .img-preview-item {
+    position: relative; aspect-ratio: 1;
+    border-radius: 4px; overflow: hidden;
+  }
+  .img-preview-item img {
+    width: 100%; height: 100%; object-fit: cover;
+  }
+  .img-preview-item .remove-img {
+    position: absolute; top: 3px; right: 3px;
+    background: rgba(0,0,0,0.7); color: #fff;
+    border: none; border-radius: 50%; width: 20px; height: 20px;
+    font-size: 12px; cursor: pointer; display: flex;
+    align-items: center; justify-content: center;
+  }
+  .img-preview-item .cover-badge {
+    position: absolute; bottom: 3px; left: 3px;
+    background: var(--accent); color: #000;
+    font-size: 8px; padding: 1px 4px; border-radius: 3px;
+    font-weight: 600; letter-spacing: 0.5px;
+  }
+
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .btn-primary {
+    background: var(--accent); color: #000;
+    border: none; border-radius: var(--radius);
+    padding: 12px 28px; font-size: 14px; font-weight: 500;
+    cursor: pointer; transition: background 0.2s; width: 100%;
+    margin-top: 8px;
+  }
+  .btn-primary:hover { background: var(--accent2); }
+  .btn-danger {
+    background: transparent; color: var(--red);
+    border: 1px solid var(--red); border-radius: var(--radius);
+    padding: 8px 16px; font-size: 13px;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .btn-danger:hover { background: var(--red); color: #fff; }
+
+  /* ── DETAIL VIEW ── */
+  .detail-view {
+    display: none; position: fixed; inset: 0;
+    background: var(--bg); z-index: 300; overflow-y: auto;
+  }
+  .detail-view.open { display: block; }
+  .detail-back {
+    position: sticky; top: 0; z-index: 10;
+    background: rgba(10,10,10,0.95); backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 24px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .btn-back {
+    background: none; border: 1px solid var(--border);
+    color: var(--text2); border-radius: 20px;
+    padding: 6px 16px; font-size: 13px; cursor: pointer;
+    display: flex; align-items: center; gap: 6px;
+    transition: all 0.2s;
+  }
+  .btn-back:hover { border-color: var(--accent); color: var(--accent); }
+  .detail-actions { margin-left: auto; display: flex; gap: 8px; }
+  .btn-edit {
+    background: var(--accent); color: #000;
+    border: none; border-radius: 20px;
+    padding: 6px 16px; font-size: 13px; cursor: pointer;
+    font-weight: 500; transition: background 0.2s;
+  }
+  .btn-edit:hover { background: var(--accent2); }
+
+  .detail-hero {
+    padding: 48px 48px 32px;
+    max-width: 900px; margin: 0 auto;
+  }
+  .detail-hero-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+  .detail-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(32px, 5vw, 56px);
+    font-weight: 300; line-height: 1.1;
+    color: var(--text); margin-bottom: 16px;
+  }
+  .detail-desc {
+    font-size: 15px; line-height: 1.7;
+    color: var(--text2); max-width: 600px;
+    margin-bottom: 24px;
+  }
+  .detail-meta-grid {
+    display: flex; flex-wrap: wrap; gap: 24px;
+    padding: 20px 0; border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 32px;
+  }
+  .detail-meta-item label {
+    display: block; font-size: 10px; letter-spacing: 2px;
+    text-transform: uppercase; color: var(--text3); margin-bottom: 4px;
+  }
+  .detail-meta-item span {
+    font-size: 14px; color: var(--text);
+  }
+
+  /* ── MASONRY ── */
+  .masonry-container {
+    padding: 0 48px 48px;
+    max-width: 900px; margin: 0 auto;
+  }
+  .masonry-grid {
+    columns: 3 200px; gap: 12px;
+  }
+  .masonry-item {
+    break-inside: avoid; margin-bottom: 12px;
+    border-radius: 6px; overflow: hidden;
+    cursor: pointer; position: relative;
+  }
+  .masonry-item img {
+    width: 100%; display: block;
+    transition: transform 0.3s;
+  }
+  .masonry-item:hover img { transform: scale(1.02); }
+  .masonry-item .cover-mark {
+    position: absolute; top: 8px; left: 8px;
+    background: var(--accent); color: #000;
+    font-size: 9px; padding: 2px 6px; border-radius: 3px;
+    font-weight: 600; letter-spacing: 0.5px;
+  }
+
+  /* ── LIGHTBOX ── */
+  .lightbox {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.95); z-index: 400;
+    align-items: center; justify-content: center;
+  }
+  .lightbox.open { display: flex; }
+  .lightbox img {
+    max-width: 90vw; max-height: 90vh; object-fit: contain;
+    border-radius: 4px;
+  }
+  .lightbox-close {
+    position: absolute; top: 20px; right: 20px;
+    background: none; border: 1px solid rgba(255,255,255,0.2);
+    color: #fff; border-radius: 50%;
+    width: 40px; height: 40px; font-size: 20px;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+  }
+  .lightbox-nav {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    background: rgba(255,255,255,0.1); border: none; color: #fff;
+    width: 48px; height: 48px; border-radius: 50%; font-size: 20px;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: background 0.2s;
+  }
+  .lightbox-nav:hover { background: rgba(255,255,255,0.2); }
+  .lightbox-prev { left: 20px; }
+  .lightbox-next { right: 20px; }
+
+  /* ── SETTINGS MODAL ── */
+  .settings-btn {
+    background: none; border: 1px solid var(--border);
+    color: var(--text3); width: 36px; height: 36px;
+    border-radius: 50%; cursor: pointer; font-size: 16px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+  }
+  .settings-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px);
+    background: var(--bg3); border: 1px solid var(--border);
+    color: var(--text); padding: 12px 20px; border-radius: 24px;
+    font-size: 13px; z-index: 999;
+    transition: transform 0.3s; white-space: nowrap;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .toast.success { border-color: rgba(120, 200, 120, 0.4); color: #78c878; }
+  .toast.error { border-color: rgba(200, 100, 100, 0.4); color: #c87878; }
+
+  /* ── MOBILE SIDEBAR TOGGLE ── */
+  .sidebar-toggle {
+    display: none;
+    background: none; border: 1px solid var(--border);
+    color: var(--text2); padding: 6px 12px;
+    border-radius: 20px; font-size: 12px; cursor: pointer;
+  }
+  .sidebar-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.6); z-index: 50;
+  }
+
+  @media (max-width: 700px) {
+    .sidebar {
+      position: fixed; left: -260px; top: 60px;
+      height: calc(100vh - 60px); z-index: 60;
+      transition: left 0.3s; max-height: none;
+    }
+    .sidebar.open { left: 0; }
+    .sidebar-overlay.open { display: block; }
+    .sidebar-toggle { display: flex; align-items: center; gap: 6px; }
+    .main { padding: 16px; }
+    .detail-hero { padding: 24px 20px 20px; }
+    .masonry-container { padding: 0 20px 40px; }
+    .masonry-grid { columns: 2 140px; }
+    .form-row { grid-template-columns: 1fr; }
+    .modal { padding: 24px 20px; }
+  }
+
+  .loading-spinner {
+    display: inline-block; width: 16px; height: 16px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .ai-search-status {
+    font-size: 11px; color: var(--text3); margin-top: 6px;
+    display: flex; align-items: center; gap: 6px; min-height: 18px;
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="logo">Muse</div>
+  <button class="sidebar-toggle" onclick="toggleSidebar()">
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M0 3h16v1.5H0zm0 4h16v1.5H0zm0 4h16v1.5H0z"/></svg>
+    Filters
+  </button>
+  <div class="search-wrap">
+    <input type="text" id="searchInput" placeholder="Search shoots, descriptions, tags…" oninput="handleSearch(this.value)">
+    <span class="ai-badge" id="aiBadge">AI</span>
+    <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+  </div>
+  <button class="settings-btn" onclick="openSettings()" title="Settings">⚙</button>
+  <button class="btn-add" onclick="openAddModal()">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+    Add Shoot
+  </button>
+</header>
+
+<!-- SIDEBAR OVERLAY (mobile) -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+<!-- APP BODY -->
+<div class="app-body">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-title">Filters</div>
+
+    <div id="filterContainer"></div>
+
+    <span class="clear-filters" id="clearFilters" onclick="clearAllFilters()">Clear all filters</span>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="results-bar">
+      <div class="results-count" id="resultsCount"></div>
+      <div class="active-filters" id="activeFilterTags"></div>
+    </div>
+    <div id="aiSearchStatus" class="ai-search-status"></div>
+    <div class="card-grid" id="cardGrid"></div>
+  </main>
+</div>
+
+<!-- ── ADD / EDIT MODAL ── -->
+<div class="modal-overlay" id="addModalOverlay" onclick="closeAddModal(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <button class="modal-close" onclick="closeAddModal()">×</button>
+    <h2 id="modalTitle">New Photoshoot</h2>
+
+    <div class="form-group">
+      <label>Title *</label>
+      <input type="text" id="fieldTitle" placeholder="e.g. Golden Hour Meadow Session">
+    </div>
+
+    <div class="form-group">
+      <label>Description</label>
+      <textarea id="fieldDesc" rows="3" placeholder="Describe the mood, concept, story…"></textarea>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Gender</label>
+        <div class="chips-wrap" id="chipGender"></div>
+      </div>
+      <div class="form-group">
+        <label>Type of Shoot</label>
+        <div class="chips-wrap" id="chipShootType"></div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Location (select multiple)</label>
+      <div class="chips-wrap" id="chipLocation"></div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Dress Type</label>
+        <div class="chips-wrap" id="chipDressType"></div>
+      </div>
+      <div class="form-group">
+        <label>Dress Color</label>
+        <div class="chips-wrap" id="chipDressColor"></div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Custom Tags (press Enter or comma to add)</label>
+      <div class="tags-input-wrap" id="customTagsWrap" onclick="document.getElementById('customTagInput').focus()">
+        <input type="text" id="customTagInput" placeholder="Add tag…" onkeydown="handleTagInput(event)">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Images (first image = cover)</label>
+      <div class="img-upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()" ondragover="handleDragOver(event)" ondrop="handleDrop(event)">
+        <input type="file" id="fileInput" accept="image/*" multiple onchange="handleFiles(this.files)">
+        <div>📷 Tap to upload or drag images here</div>
+        <div style="font-size:12px;margin-top:4px;color:var(--text3)">Supports JPG, PNG, WEBP</div>
+      </div>
+      <div class="img-preview-grid" id="imgPreviewGrid"></div>
+    </div>
+
+    <div style="display:flex;gap:10px;margin-top:8px">
+      <button class="btn-primary" id="saveBtn" onclick="saveShoot()">Save Photoshoot</button>
+      <button class="btn-danger" id="deleteBtn" onclick="deleteShoot()" style="display:none">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── SETTINGS MODAL ── -->
+<div class="modal-overlay" id="settingsOverlay" onclick="closeSettings(event)">
+  <div class="modal" style="max-width:480px" onclick="event.stopPropagation()">
+    <button class="modal-close" onclick="closeSettings()">×</button>
+    <h2>Settings</h2>
+    <div class="form-group">
+      <label>Gemini API Key (for AI Search)</label>
+      <input type="password" id="geminiKeyInput" placeholder="Paste your free Gemini API key here">
+      <div style="font-size:11px;color:var(--text3);margin-top:6px">
+        Get a free key at <strong style="color:var(--accent)">aistudio.google.com</strong> → Get API Key. No credit card needed.
+      </div>
+    </div>
+    <button class="btn-primary" onclick="saveSettings()">Save Settings</button>
+  </div>
+</div>
+
+<!-- ── DETAIL VIEW ── -->
+<div class="detail-view" id="detailView">
+  <div class="detail-back">
+    <button class="btn-back" onclick="closeDetail()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+      Back
+    </button>
+    <div class="detail-actions">
+      <button class="btn-edit" onclick="editCurrentShoot()">Edit</button>
+    </div>
+  </div>
+  <div id="detailContent"></div>
+</div>
+
+<!-- ── LIGHTBOX ── -->
+<div class="lightbox" id="lightbox">
+  <button class="lightbox-close" onclick="closeLightbox()">×</button>
+  <button class="lightbox-nav lightbox-prev" onclick="lightboxNav(-1)">‹</button>
+  <img id="lightboxImg" src="" alt="">
+  <button class="lightbox-nav lightbox-next" onclick="lightboxNav(1)">›</button>
+</div>
+
+<!-- ── TOAST ── -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════
+// DATA LAYER — IndexedDB
+// ═══════════════════════════════════════════════
+const DB_NAME = 'MuseDB', DB_VER = 1;
+let db;
+
+function initDB() {
+  return new Promise((res, rej) => {
+    const req = indexedDB.open(DB_NAME, DB_VER);
+    req.onupgradeneeded = e => {
+      const d = e.target.result;
+      if (!d.objectStoreNames.contains('shoots')) {
+        const store = d.createObjectStore('shoots', { keyPath: 'id' });
+        store.createIndex('title', 'title', { unique: false });
+      }
+    };
+    req.onsuccess = e => { db = e.target.result; res(); };
+    req.onerror = e => rej(e);
+  });
+}
+
+function dbGetAll() {
+  return new Promise((res, rej) => {
+    const tx = db.transaction('shoots', 'readonly');
+    const req = tx.objectStore('shoots').getAll();
+    req.onsuccess = () => res(req.result || []);
+    req.onerror = rej;
+  });
+}
+
+function dbPut(shoot) {
+  return new Promise((res, rej) => {
+    const tx = db.transaction('shoots', 'readwrite');
+    const req = tx.objectStore('shoots').put(shoot);
+    req.onsuccess = res; req.onerror = rej;
+  });
+}
+
+function dbDelete(id) {
+  return new Promise((res, rej) => {
+    const tx = db.transaction('shoots', 'readwrite');
+    const req = tx.objectStore('shoots').delete(id);
+    req.onsuccess = res; req.onerror = rej;
+  });
+}
+
+// ═══════════════════════════════════════════════
+// FILTER DEFINITIONS — easy to extend
+// ═══════════════════════════════════════════════
+const FILTERS = [
+  {
+    key: 'gender',
+    label: 'Gender',
+    options: ['Female', 'Male', 'Non-binary', 'Couple', 'Group']
+  },
+  {
+    key: 'shootType',
+    label: 'Type of Shoot',
+    options: ['Portrait', 'Editorial', 'Fashion', 'Boudoir', 'Maternity', 'Wedding', 'Engagement', 'Family', 'Newborn', 'Street', 'Fine Art', 'Commercial']
+  },
+  {
+    key: 'location',
+    label: 'Location',
+    multi: true,
+    options: ['Studio', 'Outdoor', 'Beach', 'Forest', 'Urban', 'Mountains', 'Desert', 'Garden', 'Rooftop', 'Indoor Home', 'Church/Chapel', 'Warehouse']
+  },
+  {
+    key: 'dressType',
+    label: 'Dress Type',
+    options: ['Gown', 'Mini', 'Midi', 'Jumpsuit', 'Suit', 'Casual', 'Lingerie', 'Traditional', 'Swimwear', 'Naked/Implied']
+  },
+  {
+    key: 'dressColor',
+    label: 'Dress Color',
+    colors: true,
+    options: ['White', 'Black', 'Red', 'Blue', 'Green', 'Yellow', 'Pink', 'Purple', 'Orange', 'Brown', 'Nude/Beige', 'Multi-color', 'Metallics']
+  }
+];
+
+const COLOR_MAP = {
+  'White': '#f5f5f0', 'Black': '#222', 'Red': '#c0392b',
+  'Blue': '#2980b9', 'Green': '#27ae60', 'Yellow': '#f1c40f',
+  'Pink': '#e91e8c', 'Purple': '#8e44ad', 'Orange': '#e67e22',
+  'Brown': '#7d5a45', 'Nude/Beige': '#c4a882', 'Multi-color': 'linear-gradient(135deg,#f00,#0f0,#00f)',
+  'Metallics': 'linear-gradient(135deg,#c0c0c0,#ffd700)'
+};
+
+// ═══════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════
+let allShoots = [];
+let filteredShoots = [];
+let activeFilters = {}; // { gender: 'Female', location: ['Beach','Forest'], ... }
+let searchQuery = '';
+let editingId = null;
+let pendingImages = []; // [{dataUrl, name}]
+let customTags = [];
+let currentDetailId = null;
+let lightboxImages = [];
+let lightboxIndex = 0;
+let searchTimer = null;
+
+// ═══════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════
+async function init() {
+  await initDB();
+  allShoots = await dbGetAll();
+  buildSidebarFilters();
+  applyFiltersAndSearch();
+  loadSettings();
+}
+
+// ═══════════════════════════════════════════════
+// SIDEBAR FILTERS
+// ═══════════════════════════════════════════════
+function buildSidebarFilters() {
+  const container = document.getElementById('filterContainer');
+  container.innerHTML = '';
+
+  FILTERS.forEach(f => {
+    const counts = {};
+    allShoots.forEach(s => {
+      const val = s[f.key];
+      if (!val) return;
+      if (Array.isArray(val)) {
+        val.forEach(v => { counts[v] = (counts[v]||0)+1; });
+      } else {
+        counts[val] = (counts[val]||0)+1;
+      }
+    });
+
+    const group = document.createElement('div');
+    group.className = 'filter-group';
+    const isActive = activeFilters[f.key];
+
+    group.innerHTML = `
+      <div class="filter-group-title" onclick="toggleFilterGroup(this)">
+        ${f.label}
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+          <path d="M6 8L1 3h10z"/>
+        </svg>
+      </div>
+      <div class="filter-options">
+        ${f.options.map(opt => {
+          const active = f.multi
+            ? (isActive && isActive.includes(opt))
+            : (isActive === opt);
+          const count = counts[opt] || 0;
+          const colorDot = f.colors
+            ? `<span class="dot" style="background:${COLOR_MAP[opt]||'#888'};${opt==='Multi-color'?'background:linear-gradient(135deg,#f00,#0f0,#00f)':''}"></span>`
+            : '';
+          return `<div class="filter-chip ${active?'active':''}" onclick="toggleFilter('${f.key}','${opt}',${!!f.multi})">
+            ${colorDot}${opt}
+            <span class="count">${count}</span>
+          </div>`;
+        }).join('')}
+      </div>`;
+    container.appendChild(group);
+  });
+
+  // Clear button
+  const hasActive = Object.keys(activeFilters).length > 0;
+  document.getElementById('clearFilters').className = 'clear-filters' + (hasActive ? ' visible' : '');
+}
+
+function toggleFilterGroup(el) {
+  el.classList.toggle('collapsed');
+  el.nextElementSibling.classList.toggle('hidden');
+}
+
+function toggleFilter(key, value, multi) {
+  if (multi) {
+    if (!activeFilters[key]) activeFilters[key] = [];
+    const idx = activeFilters[key].indexOf(value);
+    if (idx > -1) activeFilters[key].splice(idx, 1);
+    else activeFilters[key].push(value);
+    if (activeFilters[key].length === 0) delete activeFilters[key];
+  } else {
+    if (activeFilters[key] === value) delete activeFilters[key];
+    else activeFilters[key] = value;
+  }
+  buildSidebarFilters();
+  applyFiltersAndSearch();
+}
+
+function clearAllFilters() {
+  activeFilters = {};
+  buildSidebarFilters();
+  applyFiltersAndSearch();
+}
+
+// ═══════════════════════════════════════════════
+// SEARCH
+// ═══════════════════════════════════════════════
+function handleSearch(val) {
+  searchQuery = val.trim();
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => applyFiltersAndSearch(), 300);
+}
+
+async function applyFiltersAndSearch() {
+  // 1. Apply sidebar filters
+  let results = allShoots.filter(s => {
+    return Object.entries(activeFilters).every(([key, val]) => {
+      const shootVal = s[key];
+      if (!shootVal) return false;
+      if (Array.isArray(val)) {
+        // multi-select: shoot must have at least one matching
+        if (Array.isArray(shootVal)) return val.some(v => shootVal.includes(v));
+        return val.includes(shootVal);
+      }
+      if (Array.isArray(shootVal)) return shootVal.includes(val);
+      return shootVal === val;
+    });
+  });
+
+  // 2. Apply search
+  if (searchQuery) {
+    const apiKey = localStorage.getItem('geminiKey');
+    if (apiKey) {
+      results = await aiSearch(results, searchQuery, apiKey);
+    } else {
+      results = basicSearch(results, searchQuery);
+    }
+  }
+
+  filteredShoots = results;
+  renderCards(filteredShoots);
+  updateResultsBar();
+}
+
+function basicSearch(shoots, query) {
+  const q = query.toLowerCase();
+  const terms = q.split(/\s+/);
+  return shoots.filter(s => {
+    const haystack = [
+      s.title || '',
+      s.description || '',
+      s.gender || '',
+      s.shootType || '',
+      s.dressType || '',
+      s.dressColor || '',
+      ...(s.location || []),
+      ...(s.customTags || [])
+    ].join(' ').toLowerCase();
+    return terms.every(t => haystack.includes(t));
+  });
+}
+
+async function aiSearch(shoots, query, apiKey) {
+  const statusEl = document.getElementById('aiSearchStatus');
+  document.getElementById('aiBadge').classList.add('visible');
+  statusEl.innerHTML = `<span class="loading-spinner"></span> AI is finding the best matches…`;
+
+  try {
+    const shootSummaries = shoots.map((s, i) => ({
+      index: i,
+      title: s.title,
+      description: s.description || '',
+      tags: [s.gender, s.shootType, s.dressType, s.dressColor, ...(s.location||[]), ...(s.customTags||[])].filter(Boolean).join(', ')
+    }));
+
+    const prompt = `You are a photoshoot search assistant. Given a user query and a list of photoshoots, return the indices of matching shoots sorted by relevance (most relevant first). Be generous — include anything somewhat related.
+
+User query: "${query}"
+
+Photoshoots:
+${JSON.stringify(shootSummaries, null, 2)}
+
+Reply with ONLY a JSON array of indices, e.g. [2,0,5]. If nothing matches, return [].`;
+
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+    });
+
+    if (!res.ok) throw new Error('API error');
+    const data = await res.json();
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '[]';
+    const match = text.match(/\[[\d,\s]*\]/);
+    const indices = match ? JSON.parse(match[0]) : [];
+
+    statusEl.innerHTML = `✦ AI search — ${indices.length} relevant result${indices.length!==1?'s':''} found`;
+    return indices.map(i => shoots[i]).filter(Boolean);
+
+  } catch (err) {
+    console.warn('AI search failed, falling back:', err);
+    statusEl.innerHTML = `⚠ AI unavailable — using basic search`;
+    document.getElementById('aiBadge').classList.remove('visible');
+    return basicSearch(shoots, query);
+  }
+}
+
+// ═══════════════════════════════════════════════
+// RENDER CARDS
+// ═══════════════════════════════════════════════
+function renderCards(shoots) {
+  const grid = document.getElementById('cardGrid');
+  if (shoots.length === 0) {
+    grid.innerHTML = `<div class="empty-state">
+      <div class="icon">📷</div>
+      <h3>${allShoots.length === 0 ? 'Your inspiration board is empty' : 'No shoots match your search'}</h3>
+      <p>${allShoots.length === 0 ? 'Click "Add Shoot" to start building your collection.' : 'Try adjusting your filters or search query.'}</p>
+    </div>`;
+    return;
+  }
+
+  grid.innerHTML = shoots.map(s => {
+    const coverImg = s.images && s.images.length > 0
+      ? `<img class="card-img" src="${s.images[0].dataUrl}" alt="${s.title}" loading="lazy">`
+      : `<div class="card-img-placeholder">📷</div>`;
+
+    const tags = [
+      s.gender ? `<span class="tag gender">${s.gender}</span>` : '',
+      s.shootType ? `<span class="tag shoot-type">${s.shootType}</span>` : '',
+      s.dressColor ? `<span class="tag dress-color">${s.dressColor}</span>` : ''
+    ].filter(Boolean).join('');
+
+    const imgCount = s.images ? s.images.length : 0;
+
+    return `<div class="shoot-card" onclick="openDetail('${s.id}')">
+      ${coverImg}
+      <div class="card-body">
+        <div class="card-title">${s.title || 'Untitled'}</div>
+        <div class="card-meta">${tags}</div>
+        <div class="card-img-count">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          ${imgCount} image${imgCount!==1?'s':''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function updateResultsBar() {
+  const total = filteredShoots.length;
+  document.getElementById('resultsCount').innerHTML =
+    `Showing <span>${total}</span> shoot${total!==1?'s':''}${searchQuery ? ` for "<em>${searchQuery}</em>"` : ''}`;
+
+  // active filter tags
+  const wrap = document.getElementById('activeFilterTags');
+  wrap.innerHTML = Object.entries(activeFilters).map(([key, val]) => {
+    const label = FILTERS.find(f=>f.key===key)?.label || key;
+    const display = Array.isArray(val) ? val.join(', ') : val;
+    return `<span class="active-tag" onclick="toggleFilter('${key}','${val}',${Array.isArray(val)})">
+      ${label}: ${display} ×
+    </span>`;
+  }).join('');
+
+  if (!searchQuery) {
+    document.getElementById('aiBadge').classList.remove('visible');
+    document.getElementById('aiSearchStatus').innerHTML = '';
+  }
+}
+
+// ═══════════════════════════════════════════════
+// DETAIL VIEW
+// ═══════════════════════════════════════════════
+function openDetail(id) {
+  const shoot = allShoots.find(s => s.id === id);
+  if (!shoot) return;
+  currentDetailId = id;
+
+  const allTags = [
+    shoot.gender, shoot.shootType, shoot.dressType, shoot.dressColor,
+    ...(shoot.location||[]), ...(shoot.customTags||[])
+  ].filter(Boolean);
+
+  const metaItems = [
+    shoot.gender && { label: 'Gender', val: shoot.gender },
+    shoot.shootType && { label: 'Shoot Type', val: shoot.shootType },
+    shoot.dressType && { label: 'Dress', val: shoot.dressType },
+    shoot.dressColor && { label: 'Color', val: shoot.dressColor },
+    shoot.location?.length && { label: 'Location', val: shoot.location.join(', ') },
+  ].filter(Boolean);
+
+  const images = shoot.images || [];
+  lightboxImages = images.map(i => i.dataUrl);
+
+  document.getElementById('detailContent').innerHTML = `
+    <div class="detail-hero">
+      <div class="detail-hero-tags">
+        ${allTags.map(t => `<span class="tag">${t}</span>`).join('')}
+      </div>
+      <h1 class="detail-title">${shoot.title || 'Untitled'}</h1>
+      ${shoot.description ? `<p class="detail-desc">${shoot.description}</p>` : ''}
+      <div class="detail-meta-grid">
+        ${metaItems.map(m => `<div class="detail-meta-item"><label>${m.label}</label><span>${m.val}</span></div>`).join('')}
+        <div class="detail-meta-item"><label>Images</label><span>${images.length}</span></div>
+      </div>
+    </div>
+    <div class="masonry-container">
+      <div class="masonry-grid">
+        ${images.map((img, i) => `
+          <div class="masonry-item" onclick="openLightbox(${i})">
+            ${i === 0 ? '<span class="cover-mark">COVER</span>' : ''}
+            <img src="${img.dataUrl}" alt="Image ${i+1}" loading="lazy">
+          </div>`).join('')}
+      </div>
+    </div>`;
+
+  document.getElementById('detailView').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeDetail() {
+  document.getElementById('detailView').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function editCurrentShoot() {
+  closeDetail();
+  openEditModal(currentDetailId);
+}
+
+// ═══════════════════════════════════════════════
+// LIGHTBOX
+// ═══════════════════════════════════════════════
+function openLightbox(idx) {
+  lightboxIndex = idx;
+  document.getElementById('lightboxImg').src = lightboxImages[idx];
+  document.getElementById('lightbox').classList.add('open');
+}
+
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('open');
+}
+
+function lightboxNav(dir) {
+  lightboxIndex = (lightboxIndex + dir + lightboxImages.length) % lightboxImages.length;
+  document.getElementById('lightboxImg').src = lightboxImages[lightboxIndex];
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { closeLightbox(); closeDetail(); }
+  if (document.getElementById('lightbox').classList.contains('open')) {
+    if (e.key === 'ArrowLeft') lightboxNav(-1);
+    if (e.key === 'ArrowRight') lightboxNav(1);
+  }
+});
+
+// ═══════════════════════════════════════════════
+// ADD / EDIT MODAL
+// ═══════════════════════════════════════════════
+function buildChips(containerId, filterKey, multi) {
+  const filter = FILTERS.find(f => f.key === filterKey);
+  if (!filter) return;
+  const container = document.getElementById(containerId);
+  container.innerHTML = filter.options.map(opt => {
+    const colorDot = filter.colors
+      ? `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${COLOR_MAP[opt]||'#888'};margin-right:4px;vertical-align:middle"></span>`
+      : '';
+    return `<span class="chip-option" data-key="${filterKey}" data-val="${opt}" data-multi="${multi}" onclick="toggleChip(this)">
+      ${colorDot}${opt}
+    </span>`;
+  }).join('');
+}
+
+function toggleChip(el) {
+  const multi = el.dataset.multi === 'true';
+  if (!multi) {
+    el.closest('.chips-wrap').querySelectorAll('.chip-option').forEach(c => c.classList.remove('selected'));
+  }
+  el.classList.toggle('selected');
+}
+
+function getChipValues(filterKey) {
+  const chips = document.querySelectorAll(`.chip-option[data-key="${filterKey}"].selected`);
+  const vals = Array.from(chips).map(c => c.dataset.val);
+  const filter = FILTERS.find(f => f.key === filterKey);
+  if (filter?.multi) return vals.length ? vals : null;
+  return vals[0] || null;
+}
+
+function setChipValues(filterKey, value) {
+  document.querySelectorAll(`.chip-option[data-key="${filterKey}"]`).forEach(c => {
+    c.classList.remove('selected');
+    if (Array.isArray(value)) {
+      if (value.includes(c.dataset.val)) c.classList.add('selected');
+    } else {
+      if (c.dataset.val === value) c.classList.add('selected');
+    }
+  });
+}
+
+function openAddModal() {
+  editingId = null;
+  pendingImages = [];
+  customTags = [];
+  document.getElementById('modalTitle').textContent = 'New Photoshoot';
+  document.getElementById('fieldTitle').value = '';
+  document.getElementById('fieldDesc').value = '';
+  document.getElementById('deleteBtn').style.display = 'none';
+  buildChips('chipGender', 'gender', false);
+  buildChips('chipShootType', 'shootType', false);
+  buildChips('chipLocation', 'location', true);
+  buildChips('chipDressType', 'dressType', false);
+  buildChips('chipDressColor', 'dressColor', false);
+  renderCustomTags();
+  renderImgPreviews();
+  document.getElementById('addModalOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function openEditModal(id) {
+  const shoot = allShoots.find(s => s.id === id);
+  if (!shoot) return;
+  editingId = id;
+  pendingImages = shoot.images ? [...shoot.images] : [];
+  customTags = shoot.customTags ? [...shoot.customTags] : [];
+
+  document.getElementById('modalTitle').textContent = 'Edit Photoshoot';
+  document.getElementById('fieldTitle').value = shoot.title || '';
+  document.getElementById('fieldDesc').value = shoot.description || '';
+  document.getElementById('deleteBtn').style.display = 'block';
+
+  buildChips('chipGender', 'gender', false);
+  buildChips('chipShootType', 'shootType', false);
+  buildChips('chipLocation', 'location', true);
+  buildChips('chipDressType', 'dressType', false);
+  buildChips('chipDressColor', 'dressColor', false);
+
+  setChipValues('gender', shoot.gender);
+  setChipValues('shootType', shoot.shootType);
+  setChipValues('location', shoot.location);
+  setChipValues('dressType', shoot.dressType);
+  setChipValues('dressColor', shoot.dressColor);
+
+  renderCustomTags();
+  renderImgPreviews();
+  document.getElementById('addModalOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeAddModal(event) {
+  if (event && event.target !== document.getElementById('addModalOverlay')) return;
+  document.getElementById('addModalOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+async function saveShoot() {
+  const title = document.getElementById('fieldTitle').value.trim();
+  if (!title) { showToast('Please enter a title', 'error'); return; }
+
+  const btn = document.getElementById('saveBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="loading-spinner"></span> Saving…';
+
+  const shoot = {
+    id: editingId || Date.now().toString(),
+    title,
+    description: document.getElementById('fieldDesc').value.trim(),
+    gender: getChipValues('gender'),
+    shootType: getChipValues('shootType'),
+    location: getChipValues('location'),
+    dressType: getChipValues('dressType'),
+    dressColor: getChipValues('dressColor'),
+    customTags: [...customTags],
+    images: [...pendingImages],
+    createdAt: editingId ? (allShoots.find(s=>s.id===editingId)?.createdAt || Date.now()) : Date.now(),
+    updatedAt: Date.now()
+  };
+
+  await dbPut(shoot);
+  allShoots = await dbGetAll();
+  buildSidebarFilters();
+  applyFiltersAndSearch();
+
+  btn.disabled = false;
+  btn.textContent = 'Save Photoshoot';
+  document.getElementById('addModalOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+  showToast(editingId ? 'Photoshoot updated ✓' : 'Photoshoot saved ✓', 'success');
+}
+
+async function deleteShoot() {
+  if (!editingId) return;
+  if (!confirm('Delete this photoshoot? This cannot be undone.')) return;
+  await dbDelete(editingId);
+  allShoots = await dbGetAll();
+  buildSidebarFilters();
+  applyFiltersAndSearch();
+  document.getElementById('addModalOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+  showToast('Photoshoot deleted', 'error');
+}
+
+// ═══════════════════════════════════════════════
+// CUSTOM TAGS
+// ═══════════════════════════════════════════════
+function handleTagInput(e) {
+  const input = document.getElementById('customTagInput');
+  if (e.key === 'Enter' || e.key === ',') {
+    e.preventDefault();
+    const val = input.value.replace(',', '').trim();
+    if (val && !customTags.includes(val)) {
+      customTags.push(val);
+      renderCustomTags();
+    }
+    input.value = '';
+  }
+}
+
+function removeCustomTag(tag) {
+  customTags = customTags.filter(t => t !== tag);
+  renderCustomTags();
+}
+
+function renderCustomTags() {
+  const wrap = document.getElementById('customTagsWrap');
+  const input = document.getElementById('customTagInput');
+  wrap.innerHTML = '';
+  customTags.forEach(t => {
+    const pill = document.createElement('span');
+    pill.className = 'tag-pill';
+    pill.innerHTML = `${t}<button onclick="removeCustomTag('${t}')">×</button>`;
+    wrap.appendChild(pill);
+  });
+  wrap.appendChild(input);
+}
+
+// ═══════════════════════════════════════════════
+// IMAGE UPLOAD
+// ═══════════════════════════════════════════════
+function handleFiles(files) {
+  Array.from(files).forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      pendingImages.push({ dataUrl: e.target.result, name: file.name });
+      renderImgPreviews();
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function handleDragOver(e) {
+  e.preventDefault();
+  document.getElementById('uploadArea').classList.add('dragover');
+}
+
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('uploadArea').classList.remove('dragover');
+  handleFiles(e.dataTransfer.files);
+}
+
+function removeImage(idx) {
+  pendingImages.splice(idx, 1);
+  renderImgPreviews();
+}
+
+function renderImgPreviews() {
+  const grid = document.getElementById('imgPreviewGrid');
+  grid.innerHTML = pendingImages.map((img, i) => `
+    <div class="img-preview-item">
+      <img src="${img.dataUrl}" alt="${img.name}">
+      ${i === 0 ? '<span class="cover-badge">COVER</span>' : ''}
+      <button class="remove-img" onclick="removeImage(${i})">×</button>
+    </div>`).join('');
+}
+
+// ═══════════════════════════════════════════════
+// SETTINGS
+// ═══════════════════════════════════════════════
+function openSettings() {
+  document.getElementById('geminiKeyInput').value = localStorage.getItem('geminiKey') || '';
+  document.getElementById('settingsOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeSettings(event) {
+  if (event && event.target !== document.getElementById('settingsOverlay')) return;
+  document.getElementById('settingsOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function saveSettings() {
+  const key = document.getElementById('geminiKeyInput').value.trim();
+  if (key) localStorage.setItem('geminiKey', key);
+  else localStorage.removeItem('geminiKey');
+  document.getElementById('settingsOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+  showToast(key ? 'API key saved — AI search enabled ✓' : 'API key removed', key ? 'success' : '');
+}
+
+function loadSettings() {
+  // settings auto-load from localStorage
+}
+
+// ═══════════════════════════════════════════════
+// MOBILE SIDEBAR
+// ═══════════════════════════════════════════════
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebarOverlay').classList.toggle('open');
+}
+
+// ═══════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast' + (type ? ` ${type}` : '');
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ═══════════════════════════════════════════════
+// SERVICE WORKER REGISTRATION
+// ═══════════════════════════════════════════════
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .then(() => console.log('SW registered'))
+      .catch(err => console.warn('SW failed:', err));
+  });
+}
+
+// ═══════════════════════════════════════════════
+// START
+// ═══════════════════════════════════════════════
+init();
+</script>
+</body>
+</html>
